@@ -104,7 +104,7 @@ void ppm_handler(void)
 	for(i = 0; i < PPM_CHANNELS; ++i) {
 		/* ppm pre-pulse */
 		*outputs[PPM].port |= outputs[PPM].mask;
-		if(i != PPM)
+		if(i != PPM-1)
 			*outputs[i].port |= outputs[i].mask;
 		delay(PPM_PRE_PULSE);
 	
@@ -113,7 +113,7 @@ void ppm_handler(void)
 		delay(inputs[i]);
 	
 		/* end of channel timing */
-		if(i != PPM)
+		if(i != PPM-1)
 			*outputs[i].port &= ~outputs[i].mask;
 	}
 	/* ppm sync pulse */

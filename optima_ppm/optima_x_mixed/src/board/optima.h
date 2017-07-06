@@ -11,7 +11,7 @@
 
 /* Define the optima receiver */
 #define OPTIMA			6
-#define PPM				OPTIMA-1
+#define PPM			1	//OPTIMA-1
 //#define MODE			0
 
 /* number of PPM channels */
