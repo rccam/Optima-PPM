@@ -31,6 +31,7 @@ void timer_init(void);
 
 int main(void)
 {	
+    uint8_t j;
 	/* Initialisation here */
 	timer_init();
 	usart_init();
@@ -63,14 +64,14 @@ int main(void)
 				case PREAMBLE: // The packet begins on the next byte
 					if(byte == 0xFF) {
 						state = PACKET;
-						i = 0;
+						j = 0;
 					} else {
 						state = START;
 					}
 					break;
 				case PACKET: // Fill the buffer with the packet values
-					buffer[i++] = byte;
-					if(i >= 2 * NUM_CHANNELS) {
+					buffer[j++] = byte;
+					if(j >= 2 * NUM_CHANNELS) {
 						// We have received the channel data
 						state = VERIFY;
 					}
@@ -78,7 +79,7 @@ int main(void)
 				case VERIFY: // Verify the packet has finished
 					if(byte == 0xEE) {
 						// Fill the input values with the adjusted channel timing
-						for(i = 0; i < NUM_CHANNELS; ++i) {
+						for(uint8_t i = 0; i < NUM_CHANNELS; ++i) {
 							inputs[i] = ((uint16_t)(buffer[2*i] << 8) | (uint16_t)buffer[2*i+1]) - PPM_PRE_PULSE;
 						}
 						ppm_handler();
