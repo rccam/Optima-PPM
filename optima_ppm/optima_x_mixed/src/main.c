@@ -22,6 +22,9 @@ enum states {START, PREAMBLE, PACKET, VERIFY};
 
 static uint16_t inputs[NUM_CHANNELS] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 static uint8_t buffer[2 * NUM_CHANNELS];
+#if SELECTABLE
+uint8_t ppm_flag = 0;
+#endif
 //static uint8_t failsafe = 0;
 
 /* blocking delay */
@@ -30,19 +33,31 @@ void ppm_handler(void);
 void timer_init(void);
 
 int main(void)
-{	
+{
+    uint8_t i;
     uint8_t j;
+    uint8_t byte;
 	/* Initialisation here */
 	timer_init();
+    
+#if SELECTABLE
+    *outputs[SELECTPIN].port |= outputs[SELECTPIN].mask;
+    
+    delay(737);
+    for(i = 0; i < 250; ++i) {
+        if(!(*outputs[SELECTPIN].pin & outputs[SELECTPIN].mask))
+            ppm_flag = 1;
+    }
+    
+    *outputs[SELECTPIN].port &= ~outputs[SELECTPIN].mask;
+#endif
+    
 	usart_init();
 		
-	sei();
+	sei();  //interrupts ON
 	
 	/* State variable */
 	enum states state = START;
-	uint8_t i;
-	uint8_t byte;
-	//uint8_t previous;
 	
 	/* initialise output - only on those that are available*/
 	for(i = 0; i < OPTIMA; ++i) {
@@ -80,7 +95,7 @@ int main(void)
 					if(byte == 0xEE) {
 						// Fill the input values with the adjusted channel timing
 						for(uint8_t i = 0; i < NUM_CHANNELS; ++i) {
-							inputs[i] = ((uint16_t)(buffer[2*i] << 8) | (uint16_t)buffer[2*i+1]) - PPM_PRE_PULSE;
+							inputs[i] = ((uint16_t)(buffer[2*i] << 8) | (uint16_t)buffer[2*i+1]);
 						}
 						ppm_handler();
 						//failsafe = 0;
@@ -98,32 +113,46 @@ int main(void)
 	}
 }
 
-void ppm_handler(void)
-{
+void ppm_handler(void){
 	uint8_t i;
-	for(i = 0; i < PPM_CHANNELS; ++i) {
-		/* ppm pre-pulse */
-		*outputs[PPM].port |= outputs[PPM].mask;
-		if(i != PPM-1)
-			*outputs[i].port |= outputs[i].mask;
-		delay(PPM_PRE_PULSE);
+#if SELECTABLE
+    if(ppm_flag){
+#endif
+        
+        for(i = 0; i < PPM_CHANNELS; ++i) {     //!! PPM_CHANNELS>OPTIMA !!
+            /* ppm pre-pulse */
+            *outputs[PPM].port |= outputs[PPM].mask;
+            if(i != PPM-1 && i<OPTIMA)
+                *outputs[i].port |= outputs[i].mask;
+            delay(PPM_PRE_PULSE);
 	
-		/* end of pre-pulse */
-		*outputs[PPM].port &= ~outputs[PPM].mask;
-		delay(inputs[i]);
+            /* end of pre-pulse */
+            *outputs[PPM].port &= ~outputs[PPM].mask;
+            delay(inputs[i]-PPM_PRE_PULSE);
 	
-		/* end of channel timing */
-		if(i != PPM-1)
-			*outputs[i].port &= ~outputs[i].mask;
-	}
-	/* ppm sync pulse */
-	*outputs[PPM].port |= outputs[PPM].mask;
-	delay(PPM_PRE_PULSE);
+            /* end of channel timing */
+            if(i != PPM-1 && i<OPTIMA)
+                *outputs[i].port &= ~outputs[i].mask;
+        }
+        /* ppm sync pulse */
+        *outputs[PPM].port |= outputs[PPM].mask;
+        delay(PPM_PRE_PULSE);
 
-	/* ppm sync period */
-	*outputs[PPM].port &= ~outputs[PPM].mask;
-	delay(PPM_SYNC_PERIOD);
+        /* ppm sync period */
+        *outputs[PPM].port &= ~outputs[PPM].mask;
+        delay(PPM_SYNC_PERIOD); //?
+#if SELECTABLE
+    } else{
+        for(i = 0; i < OPTIMA; ++i) {
+            *outputs[i].port |= outputs[i].mask;
+            delay(inputs[i]);
+            *outputs[i].port &= ~outputs[i].mask;
+        }
+
+    }
+#endif
 }
+
 
 void timer_init(void)
 {
