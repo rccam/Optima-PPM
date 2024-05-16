@@ -3,8 +3,9 @@
 **Only attempt this modification if you know what you are doing and understand the risks.**
 
 Repository forked from [https://github.com/Zero3nna/Optima-PPM] Go there for information about flashing.
+Check also SBUS variant: [https://github.com/ciafe/Optima-PPM-SBUS]
 
-For important infomation please visit the blog entry from [untestedprototype](http://untestedprototype.com/2012/08/hitec-optima-ppm/)
+For important infomation please visit the blog entry from [untestedprototype]([http://untestedprototype.com/2012/08/hitec-optima-ppm/](https://web.archive.org/web/20181006063622/http://untestedprototype.com:80/2012/08/hitec-optima-ppm/)) (currently archived)
 
 There are two options of work(thats some changes):
 
